@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="{{ .Site.Params.summary }}">
+  <meta name="keywords" content="Albert Giró, Software Engineer, Java, Spring Boot, Software Architect, Tech Lead, Distributed Systems, Backend, Open Source">
+  <meta property="og:title" content="{{ .Site.Title }}">
+  <meta property="og:description" content="{{ .Site.Params.summary }}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ .Site.BaseURL }}">
+  <title>{{ .Site.Title }}</title>
+  <link rel="stylesheet" href="{{ "css/style.css" | relURL }}">
+</head>
+<body>
+  <header>
+    <nav class="container">
+      <span class="brand">Albert Giró</span>
+      <ul>
+        <li><a href="#about">About</a></li>
+        <li><a href="#experience">Experience</a></li>
+        <li><a href="#portfolio">Portfolio</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <h1>{{ .Site.Params.name }}</h1>
+        <p class="tagline">{{ .Site.Params.tagline }}</p>
+        <p class="meta">{{ .Site.Params.location }} • {{ .Site.Params.availability }}</p>
+        <div class="actions">
+          <a class="btn primary" href="{{ .Site.Params.linkedin }}" target="_blank" rel="noopener">LinkedIn</a>
+          <a class="btn" href="{{ .Site.Params.github }}" target="_blank" rel="noopener">GitHub</a>
+          <a class="btn" href="mailto:{{ .Site.Params.email }}">Email</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="about">
+      <div class="container">
+        <h2>Executive Summary</h2>
+        <p class="summary">{{ .Site.Params.summary }}</p>
+
+        <div class="highlights">
+          {{ range .Site.Data.highlights }}
+          <div class="card">
+            <h3>{{ .title }}</h3>
+            <ul>
+              {{ range .points }}
+              <li>{{ . }}</li>
+              {{ end }}
+            </ul>
+          </div>
+          {{ end }}
+        </div>
+      </div>
+    </section>
+
+    <section id="competencies">
+      <div class="container">
+        <h2>Core Competencies</h2>
+        <div class="skills-grid">
+          {{ range .Site.Data.skills }}
+          <div class="skill-group">
+            <h3>{{ .category }}</h3>
+            <ul>
+              {{ range .items }}
+              <li>{{ . }}</li>
+              {{ end }}
+            </ul>
+          </div>
+          {{ end }}
+        </div>
+      </div>
+    </section>
+
+    <section id="experience">
+      <div class="container">
+        <h2>Professional Experience</h2>
+        <div class="timeline">
+          {{ range .Site.Data.experience }}
+          <div class="job">
+            <div class="period">{{ .period }}</div>
+            <div>
+              <h3>{{ .role }}</h3>
+              <div class="company">{{ .company }}</div>
+              <p>{{ .description }}</p>
+              <div class="tags">
+                {{ range .tags }}
+                <span class="btn">{{ . }}</span>
+                {{ end }}
+              </div>
+            </div>
+          </div>
+          {{ end }}
+        </div>
+      </div>
+    </section>
+
+    <section id="portfolio">
+      <div class="container">
+        <h2>Engineering Portfolio</h2>
+        <p>A selection of open-source and personal projects that illustrate architecture, technical decision-making and end-to-end delivery. Each one is a real codebase, documented and tested.</p>
+
+        <div class="portfolio">
+          {{ range .Site.Data.projects }}
+          <div class="card project">
+            <h3>{{ .name }}</h3>
+            <p>{{ .description }}</p>
+            <ul class="case-list">
+              {{ range .points }}
+              <li>{{ . }}</li>
+              {{ end }}
+            </ul>
+            <div class="links">
+              {{ range .links }}
+              <a href="{{ .url }}" target="_blank" rel="noopener">{{ .text }}</a>
+              {{ end }}
+            </div>
+          </div>
+          {{ end }}
+        </div>
+      </div>
+    </section>
+
+    <section id="education">
+      <div class="container">
+        <h2>Education &amp; Certifications</h2>
+        <div class="education">
+          {{ range .Site.Data.education }}
+          <div class="edu-item">
+            <h3>{{ .title }}</h3>
+            <div class="institution">{{ .institution }}</div>
+            <div class="date">{{ .date }}</div>
+          </div>
+          {{ end }}
+        </div>
+      </div>
+    </section>
+
+    <section id="contact" class="contact">
+      <div class="container">
+        <h2>{{ .Site.Params.contact.heading }}</h2>
+        <p class="lead">{{ .Site.Params.contact.text }}</p>
+        <div class="actions">
+          <a class="btn primary" href="{{ .Site.Params.linkedin }}" target="_blank" rel="noopener">Connect on LinkedIn</a>
+          <a class="btn" href="mailto:{{ .Site.Params.email }}">Send email</a>
+          <a class="btn" href="{{ .Site.Params.github }}" target="_blank" rel="noopener">Explore code</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; {{ now.Year }} {{ .Site.Params.name }}. Built as an online engineering portfolio with Hugo.</p>
+    </div>
+  </footer>
+</body>
+</html>

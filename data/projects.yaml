@@ -1,0 +1,56 @@
+- name: Matriarch
+  description: Java library implementing the Object Mother pattern with a fluent API. Automates test-data generation for POJOs and Records, with Jackson/YAML pattern loading and JUnit 5 integration.
+  points:
+    - Clean public API with builders and override strategies
+    - Maven Central publishing and GitHub Actions CI
+    - Hugo documentation site and deterministic seed support
+  links:
+    - text: Source
+      url: https://github.com/giro-dev/matriarch
+- name: AI Game Master
+  description: AI-driven Game Master orchestration platform for Foundry VTT. Spring Boot backend plus TypeScript VTT integration, using LLMs, vector search and real-time audio pipelines.
+  points:
+    - RAG pipeline with OpenSearch for rules and lore retrieval
+    - Multi-agent LLM architecture (Director, Verifier, ItemGen)
+    - Whisper STT, Piper TTS and LiveKit/WebSocket integration
+  links:
+    - text: Source
+      url: https://github.com/giro-dev/AI-game-master
+- name: Bruno
+  description: Open-source API client fork (Electron + React + Node.js). Lightweight, Git-friendly alternative to Postman for exploring and testing APIs.
+  points:
+    - React frontend and Electron main-process IPC
+    - Custom .bru plain-text request format
+    - Script runtime, converters and local-first file storage
+  links:
+    - text: Source
+      url: https://github.com/giro-dev/bruno
+- name: Disk Sentinel
+  description: NO-WAKEUP disk standby manager for Debian, Ubuntu and Proxmox. Keeps idle disks spun down while preventing accidental wake-ups from scheduled tasks.
+  points:
+    - System-level observation and process correlation
+    - Low-overhead daemon suitable for home labs
+    - Practical systems programming and automation
+  links:
+    - text: Source
+      url: https://github.com/giro-dev/disk-sentinel
+- name: Registre
+  description: Personal productivity app with dynamic templates, JSON import/export and a modern responsive UI. Built for capturing and organising structured records.
+  points:
+    - Configurable field types and emoji-driven templates
+    - Client-side data import and templating engine
+    - Modern navigation and visual design iteration
+  links:
+    - text: Source
+      url: https://github.com/giro-dev/registre
+- name: Foundry VTT Modules
+  description: Collection of modules extending Foundry VTT, including live session transcription with LiveKit, Catalan localisation and session recaps for tabletop RPGs.
+  points:
+    - Real-time audio transcription and recap generation
+    - TypeScript VTT integration and packaging
+    - i18n and community-focused tooling
+  links:
+    - text: Play Logger
+      url: https://github.com/giro-dev/foundry-vtt-play-logger
+    - text: Dee Sanction
+      url: https://github.com/giro-dev/foundryvtt-dee-sanction
