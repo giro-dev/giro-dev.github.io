@@ -1,1 +1,512 @@
-Hello world
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Albert Giró Quer — Lead Software Engineer, Software Architect and open-source enthusiast specialised in Java, Spring Boot and distributed backend systems.">
+  <meta name="keywords" content="Albert Giró, Software Engineer, Java, Spring Boot, Software Architect, Tech Lead, Distributed Systems, Backend, Open Source">
+  <meta property="og:title" content="Albert Giró Quer — Lead Software Engineer & Software Architect">
+  <meta property="og:description" content="Backend engineer and architect building scalable enterprise platforms and open-source tools.">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://giro-dev.github.io/">
+  <title>Albert Giró Quer — Lead Software Engineer & Software Architect</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-2: #334155;
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --accent: #38bdf8;
+      --accent-2: #818cf8;
+      --max-width: 900px;
+      --radius: 0.5rem;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container { max-width: var(--max-width); margin: 0 auto; padding: 0 1.5rem; }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(15, 23, 42, 0.92);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--surface-2);
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem 0;
+    }
+
+    nav .brand { font-weight: 700; letter-spacing: -0.02em; }
+
+    nav ul {
+      display: flex;
+      gap: 1.25rem;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      font-size: 0.9rem;
+    }
+
+    nav a { color: var(--muted); }
+    nav a:hover { color: var(--text); }
+
+    .hero {
+      padding: 5rem 0 3rem;
+      border-bottom: 1px solid var(--surface-2);
+    }
+
+    .hero h1 {
+      font-size: clamp(2.2rem, 6vw, 3.5rem);
+      margin: 0 0 0.5rem;
+      line-height: 1.1;
+      letter-spacing: -0.03em;
+    }
+
+    .hero .tagline {
+      font-size: clamp(1.1rem, 3vw, 1.5rem);
+      color: var(--accent);
+      margin: 0 0 1rem;
+      font-weight: 500;
+    }
+
+    .hero .meta {
+      color: var(--muted);
+      margin: 0 0 1.5rem;
+    }
+
+    .hero .actions { display: flex; flex-wrap: wrap; gap: 1rem; }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.6rem 1.1rem;
+      border-radius: var(--radius);
+      border: 1px solid var(--surface-2);
+      background: var(--surface);
+      color: var(--text);
+      font-size: 0.95rem;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .btn:hover { background: var(--surface-2); border-color: var(--accent); text-decoration: none; }
+    .btn.primary { background: var(--accent); color: var(--bg); border-color: var(--accent); font-weight: 600; }
+    .btn.primary:hover { background: #7dd3fc; border-color: #7dd3fc; }
+
+    section { padding: 3.5rem 0; }
+    section + section { border-top: 1px solid var(--surface-2); }
+
+    h2 {
+      font-size: 1.6rem;
+      margin: 0 0 1.25rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 2px solid var(--accent);
+      display: inline-block;
+    }
+
+    h3 { font-size: 1.15rem; margin: 1.5rem 0 0.5rem; color: var(--accent-2); }
+    p { margin: 0 0 1rem; }
+
+    .summary {
+      font-size: 1.15rem;
+      color: var(--muted);
+      border-left: 3px solid var(--accent);
+      padding-left: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .highlights {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 1rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--surface-2);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+    }
+
+    .card h3 { margin-top: 0; font-size: 1rem; }
+    .card ul { margin: 0.5rem 0 0; padding-left: 1.1rem; color: var(--muted); }
+    .card li { margin-bottom: 0.35rem; }
+
+    .skills-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .skill-group h3 { font-size: 1rem; margin: 0 0 0.6rem; color: var(--accent); }
+    .skill-group ul { list-style: none; padding: 0; margin: 0; }
+    .skill-group li { display: inline-block; background: var(--surface); border: 1px solid var(--surface-2); padding: 0.25rem 0.6rem; border-radius: 999px; font-size: 0.85rem; margin: 0 0.35rem 0.45rem 0; color: var(--text); }
+
+    .timeline { display: flex; flex-direction: column; gap: 1.5rem; }
+
+    .job { display: grid; grid-template-columns: 1fr; gap: 0.25rem; }
+    @media (min-width: 640px) { .job { grid-template-columns: 160px 1fr; } }
+
+    .job .period { color: var(--muted); font-size: 0.9rem; }
+    .job h3 { margin: 0; font-size: 1.05rem; color: var(--text); }
+    .job .company { color: var(--accent-2); font-size: 0.95rem; }
+    .job p { color: var(--muted); margin: 0.4rem 0 0; font-size: 0.95rem; }
+    .job .tags { margin-top: 0.5rem; }
+
+    .portfolio {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .project .links { margin-top: 0.75rem; font-size: 0.9rem; }
+    .project .links a { margin-right: 0.75rem; }
+
+    .case-list { list-style: none; padding: 0; margin: 0.75rem 0 0; }
+    .case-list li { position: relative; padding-left: 1rem; color: var(--muted); font-size: 0.92rem; margin-bottom: 0.4rem; }
+    .case-list li::before { content: "→"; position: absolute; left: 0; color: var(--accent); }
+
+    .education { display: flex; flex-direction: column; gap: 1rem; }
+    .edu-item h3 { margin: 0; font-size: 1rem; color: var(--text); }
+    .edu-item .institution { color: var(--accent-2); font-size: 0.95rem; }
+    .edu-item .date { color: var(--muted); font-size: 0.85rem; }
+
+    .contact { text-align: center; padding: 4rem 0; }
+    .contact h2 { border: none; }
+    .contact .lead { color: var(--muted); max-width: 600px; margin: 0 auto 1.5rem; }
+
+    footer { text-align: center; padding: 2rem 0; color: var(--muted); font-size: 0.85rem; border-top: 1px solid var(--surface-2); }
+
+    @media print {
+      header, .actions, footer, .contact { display: none; }
+      body { background: #fff; color: #000; }
+      a { color: #000; text-decoration: none; }
+      .card, .skill-group li { background: #fff; border-color: #ccc; color: #000; }
+      section { padding: 1.5rem 0; }
+      h2 { color: #000; border-bottom-color: #000; }
+    }
+
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+  </style>
+</head>
+<body>
+  <header>
+    <nav class="container">
+      <span class="brand">Albert Giró</span>
+      <ul>
+        <li><a href="#about">About</a></li>
+        <li><a href="#experience">Experience</a></li>
+        <li><a href="#portfolio">Portfolio</a></li>
+        <li><a href="#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container">
+        <h1>Albert Giró Quer</h1>
+        <p class="tagline">Lead Software Engineer &bull; Software Architect &bull; Java &bull; Spring Boot &bull; Distributed Systems</p>
+        <p class="meta">Madrid, Spain &bull; Open to Staff / Principal / Platform Engineering roles across Europe</p>
+        <div class="actions">
+          <a class="btn primary" href="https://www.linkedin.com/in/albert-giro-quer" target="_blank" rel="noopener">LinkedIn</a>
+          <a class="btn" href="https://github.com/giro-dev" target="_blank" rel="noopener">GitHub</a>
+          <a class="btn" href="mailto:agiroq@uoc.edu">Email</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="about">
+      <div class="container">
+        <h2>Executive Summary</h2>
+        <p class="summary">
+          Software engineer specialised in enterprise backend platforms, evolved into technical leadership, architecture and the translation of complex requirements into scalable, maintainable systems. I stay close to the code while shaping the systems around it.
+        </p>
+
+        <div class="highlights">
+          <div class="card">
+            <h3>Architecture &amp; Design</h3>
+            <ul>
+              <li>Domain-Driven Design, Hexagonal Architecture and Event-Driven systems</li>
+              <li>Microservices and distributed backend platforms</li>
+              <li>API design, data integration and enterprise integration patterns</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Technical Leadership</h3>
+            <ul>
+              <li>Leading backend teams and mentoring engineers</li>
+              <li>Translating business needs into technical roadmaps</li>
+              <li>Quality, CI/CD and maintainability as first-class concerns</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Modern Backend</h3>
+            <ul>
+              <li>Java, Spring Boot, Spring Batch and Spring Security</li>
+              <li>Reliable messaging with RabbitMQ and PostgreSQL</li>
+              <li>Cloud-native deployment with Docker and Kubernetes</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>AI &amp; Emerging Tech</h3>
+            <ul>
+              <li>Spring AI, LLM orchestration and vector search</li>
+              <li>Real-time audio/video pipelines (Whisper, LiveKit, Piper TTS)</li>
+              <li>Local-first AI and intelligent automation experiments</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="competencies">
+      <div class="container">
+        <h2>Core Competencies</h2>
+        <div class="skills-grid">
+          <div class="skill-group">
+            <h3>Backend</h3>
+            <ul>
+              <li>Java</li>
+              <li>Spring Boot</li>
+              <li>Spring Batch</li>
+              <li>Spring Security</li>
+              <li>REST APIs</li>
+              <li>JUnit 5</li>
+            </ul>
+          </div>
+          <div class="skill-group">
+            <h3>Architecture</h3>
+            <ul>
+              <li>Domain-Driven Design</li>
+              <li>Hexagonal Architecture</li>
+              <li>Event-Driven Architecture</li>
+              <li>Microservices</li>
+              <li>API Design</li>
+            </ul>
+          </div>
+          <div class="skill-group">
+            <h3>Cloud &amp; Data</h3>
+            <ul>
+              <li>Docker</li>
+              <li>Kubernetes</li>
+              <li>CI/CD</li>
+              <li>PostgreSQL</li>
+              <li>RabbitMQ</li>
+              <li>OpenSearch</li>
+            </ul>
+          </div>
+          <div class="skill-group">
+            <h3>Leadership</h3>
+            <ul>
+              <li>Technical Leadership</li>
+              <li>Requirements Engineering</li>
+              <li>Stakeholder Management</li>
+              <li>Software Design</li>
+              <li>Mentoring</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="experience">
+      <div class="container">
+        <h2>Professional Experience</h2>
+        <div class="timeline">
+          <div class="job">
+            <div class="period">Sep 2023 &ndash; Present</div>
+            <div>
+              <h3>Lead Software Engineer</h3>
+              <div class="company">Mercedes-Benz Group Services Madrid</div>
+              <p>Backend technical lead for enterprise automotive systems. Architecture decisions, API design, team mentorship and driving engineering standards across distributed services.</p>
+              <div class="tags"><span class="btn">Java</span><span class="btn">Spring Boot</span><span class="btn">Microservices</span></div>
+            </div>
+          </div>
+          <div class="job">
+            <div class="period">Sep 2022 &ndash; Aug 2023</div>
+            <div>
+              <h3>Software Engineer</h3>
+              <div class="company">Mercedes-Benz Group Services Madrid</div>
+              <p>Developed and maintained backend services and integrations within the Mercedes-Benz engineering ecosystem, focusing on reliability and scalable enterprise patterns.</p>
+              <div class="tags"><span class="btn">Java</span><span class="btn">REST APIs</span><span class="btn">CI/CD</span></div>
+            </div>
+          </div>
+          <div class="job">
+            <div class="period">Aug 2021 &ndash; Sep 2022</div>
+            <div>
+              <h3>Software Engineer</h3>
+              <div class="company">Iberm&aacute;tica</div>
+              <p>Delivered backend solutions for clients in consultancy engagements, applying clean architecture and modern Java stacks to enterprise platforms.</p>
+              <div class="tags"><span class="btn">Java</span><span class="btn">Spring</span><span class="btn">Enterprise Integration</span></div>
+            </div>
+          </div>
+          <div class="job">
+            <div class="period">Aug 2019 &ndash; Aug 2021</div>
+            <div>
+              <h3>Analyst Programmer</h3>
+              <div class="company">Softtek</div>
+              <p>Analysis, design and development of business applications, bridging functional requirements with technical implementation in multidisciplinary teams.</p>
+              <div class="tags"><span class="btn">Java</span><span class="btn">Spring Boot</span><span class="btn">PostgreSQL</span></div>
+            </div>
+          </div>
+          <div class="job">
+            <div class="period">Aug 2017 &ndash; Aug 2019</div>
+            <div>
+              <h3>Web Application Developer</h3>
+              <div class="company">Capgemini</div>
+              <p>Built and maintained web applications and services for large-scale clients, strengthening foundations in enterprise software delivery and agile collaboration.</p>
+              <div class="tags"><span class="btn">Java</span><span class="btn">Web Applications</span><span class="btn">Agile</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="portfolio">
+      <div class="container">
+        <h2>Engineering Portfolio</h2>
+        <p>A selection of open-source and personal projects that illustrate architecture, technical decision-making and end-to-end delivery. Each one is a real codebase, documented and tested.</p>
+
+        <div class="portfolio">
+          <div class="card project">
+            <h3>Matriarch</h3>
+            <p>Java library implementing the Object Mother pattern with a fluent API. Automates test-data generation for POJOs and Records, with Jackson/YAML pattern loading and JUnit 5 integration.</p>
+            <ul class="case-list">
+              <li>Clean public API with builders and override strategies</li>
+              <li>Maven Central publishing and GitHub Actions CI</li>
+              <li>Hugo documentation site and deterministic seed support</li>
+            </ul>
+            <div class="links">
+              <a href="https://github.com/giro-dev/matriarch" target="_blank" rel="noopener">Source</a>
+            </div>
+          </div>
+
+          <div class="card project">
+            <h3>AI Game Master</h3>
+            <p>AI-driven Game Master orchestration platform for Foundry VTT. Spring Boot backend plus TypeScript VTT integration, using LLMs, vector search and real-time audio pipelines.</p>
+            <ul class="case-list">
+              <li>RAG pipeline with OpenSearch for rules and lore retrieval</li>
+              <li>Multi-agent LLM architecture (Director, Verifier, ItemGen)</li>
+              <li>Whisper STT, Piper TTS and LiveKit/WebSocket integration</li>
+            </ul>
+            <div class="links">
+              <a href="https://github.com/giro-dev/AI-game-master" target="_blank" rel="noopener">Source</a>
+            </div>
+          </div>
+
+          <div class="card project">
+            <h3>Bruno</h3>
+            <p>Open-source API client fork (Electron + React + Node.js). Lightweight, Git-friendly alternative to Postman for exploring and testing APIs.</p>
+            <ul class="case-list">
+              <li>React frontend and Electron main-process IPC</li>
+              <li>Custom .bru plain-text request format</li>
+              <li>Script runtime, converters and local-first file storage</li>
+            </ul>
+            <div class="links">
+              <a href="https://github.com/giro-dev/bruno" target="_blank" rel="noopener">Source</a>
+            </div>
+          </div>
+
+          <div class="card project">
+            <h3>Disk Sentinel</h3>
+            <p>NO-WAKEUP disk standby manager for Debian, Ubuntu and Proxmox. Keeps idle disks spun down while preventing accidental wake-ups from scheduled tasks.</p>
+            <ul class="case-list">
+              <li>System-level observation and process correlation</li>
+              <li>Low-overhead daemon suitable for home labs</li>
+              <li>Practical systems programming and automation</li>
+            </ul>
+            <div class="links">
+              <a href="https://github.com/giro-dev/disk-sentinel" target="_blank" rel="noopener">Source</a>
+            </div>
+          </div>
+
+          <div class="card project">
+            <h3>Registre</h3>
+            <p>Personal productivity app with dynamic templates, JSON import/export and a modern responsive UI. Built for capturing and organising structured records.</p>
+            <ul class="case-list">
+              <li>Configurable field types and emoji-driven templates</li>
+              <li>Client-side data import and templating engine</li>
+              <li>Modern navigation and visual design iteration</li>
+            </ul>
+            <div class="links">
+              <a href="https://github.com/giro-dev/registre" target="_blank" rel="noopener">Source</a>
+            </div>
+          </div>
+
+          <div class="card project">
+            <h3>Foundry VTT Modules</h3>
+            <p>Collection of modules extending Foundry VTT, including live session transcription with LiveKit, Catalan localisation and session recaps for tabletop RPGs.</p>
+            <ul class="case-list">
+              <li>Real-time audio transcription and recap generation</li>
+              <li>TypeScript VTT integration and packaging</li>
+              <li>i18n and community-focused tooling</li>
+            </ul>
+            <div class="links">
+              <a href="https://github.com/giro-dev/foundry-vtt-play-logger" target="_blank" rel="noopener">Play Logger</a>
+              <a href="https://github.com/giro-dev/foundryvtt-dee-sanction" target="_blank" rel="noopener">Dee Sanction</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="education">
+      <div class="container">
+        <h2>Education &amp; Certifications</h2>
+        <div class="education">
+          <div class="edu-item">
+            <h3>Bachelor's Degree in Computer Engineering</h3>
+            <div class="institution">Universitat Oberta de Catalunya (UOC)</div>
+            <div class="date">2016 &ndash; 2024</div>
+          </div>
+          <div class="edu-item">
+            <h3>Oracle Certified Associate, Java SE 8 Programmer</h3>
+            <div class="institution">Oracle</div>
+            <div class="date">Apr 2019</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="contact" class="contact">
+      <div class="container">
+        <h2>Let's build something solid</h2>
+        <p class="lead">I am interested in Staff Engineer, Principal Engineer and Software Architect roles in product-led companies. If you are working on distributed systems, platform engineering or AI-powered backends, I would love to hear from you.</p>
+        <div class="actions" style="justify-content: center;">
+          <a class="btn primary" href="https://www.linkedin.com/in/albert-giro-quer" target="_blank" rel="noopener">Connect on LinkedIn</a>
+          <a class="btn" href="mailto:agiroq@uoc.edu">Send email</a>
+          <a class="btn" href="https://github.com/giro-dev" target="_blank" rel="noopener">Explore code</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>&copy; 2026 Albert Giró Quer. Built as an online engineering portfolio.</p>
+    </div>
+  </footer>
+</body>
+</html>
