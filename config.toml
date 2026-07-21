@@ -1,7 +1,7 @@
 baseURL = 'https://giro-dev.github.io/'
 languageCode = 'en-us'
 title = 'Albert Giró Quer — Lead Software Engineer & Software Architect'
-publishDir = 'docs'
+publishDir = 'public'
 disableKinds = ['taxonomy', 'term', 'RSS', 'section']
 
 [params]
