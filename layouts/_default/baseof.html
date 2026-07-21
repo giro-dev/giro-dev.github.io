@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  {{ if .Params.description }}
+  <meta name="description" content="{{ .Params.description }}">
+  {{ else if .Site.Params.summary }}
+  <meta name="description" content="{{ .Site.Params.summary }}">
+  {{ end }}
+  <meta property="og:title" content="{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }}{{ end }}">
+  <meta property="og:description" content="{{ if .Params.description }}{{ .Params.description }}{{ else }}{{ .Site.Params.summary }}{{ end }}">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="{{ .Permalink }}">
+  <title>{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }} | {{ .Site.Title }}{{ end }}</title>
+  <link rel="stylesheet" href="{{ "css/style.css" | relURL }}">
+</head>
+<body>
+  <header>
+    <nav class="container">
+      <span class="brand"><a href="{{ "/" | relURL }}">Albert Giró</a></span>
+      <ul>
+        <li><a href="{{ "/" | relURL }}#about">About</a></li>
+        <li><a href="{{ "/" | relURL }}#experience">Experience</a></li>
+        <li><a href="{{ "/" | relURL }}#portfolio">Portfolio</a></li>
+        <li><a href="{{ "/blog" | relURL }}">Blog</a></li>
+        <li><a href="{{ "/" | relURL }}#contact">Contact</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  {{ block "main" . }}{{ end }}
+
+  <footer>
+    <div class="container">
+      <p>&copy; {{ now.Year }} {{ .Site.Params.name }}. Built as an online engineering portfolio with Hugo.</p>
+    </div>
+  </footer>
+</body>
+</html>
