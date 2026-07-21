@@ -1,0 +1,25 @@
+{{ define "main" }}
+<main>
+  <section class="hero">
+    <div class="container">
+      <h1>{{ .Site.Params.blogTitle }}</h1>
+      <p class="tagline">{{ .Site.Params.blogSubtitle }}</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="posts">
+        {{ range .Pages }}
+        <article class="post-summary card">
+          <h2><a href="{{ .RelPermalink }}">{{ .Title }}</a></h2>
+          <p class="date">{{ .Date.Format "Jan 2, 2006" }}</p>
+          <p>{{ .Summary }}</p>
+          <a href="{{ .RelPermalink }}">Read more →</a>
+        </article>
+        {{ end }}
+      </div>
+    </div>
+  </section>
+</main>
+{{ end }}

@@ -2,7 +2,7 @@ baseURL = 'https://giro-dev.github.io/'
 languageCode = 'en-us'
 title = 'Albert Giró Quer — Lead Software Engineer & Software Architect'
 publishDir = 'public'
-disableKinds = ['taxonomy', 'term', 'RSS', 'section']
+disableKinds = ['taxonomy', 'term', 'RSS']
 
 [params]
   name = 'Albert Giró Quer'
@@ -13,6 +13,8 @@ disableKinds = ['taxonomy', 'term', 'RSS', 'section']
   email = 'agiroq@uoc.edu'
   linkedin = 'https://www.linkedin.com/in/albert-giro-quer'
   github = 'https://github.com/giro-dev'
+  blogTitle = 'Blog'
+  blogSubtitle = 'Notes on backend engineering, architecture and AI.'
 
   [params.contact]
     heading = "Let's build something solid"

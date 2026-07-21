@@ -200,3 +200,33 @@ footer { text-align: center; padding: 2rem 0; color: var(--muted); font-size: 0.
 }
 
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+nav .brand a { color: var(--text); }
+nav .brand a:hover { text-decoration: none; }
+
+#blog { padding: 3.5rem 0; }
+#blog h2 { border-bottom: 2px solid var(--accent); }
+
+.posts { display: flex; flex-direction: column; gap: 1.25rem; }
+
+.post-summary h2, .post-summary h3 { margin: 0 0 0.35rem; font-size: 1.15rem; }
+.post-summary h2 a, .post-summary h3 a { color: var(--text); }
+.post-summary h2 a:hover, .post-summary h3 a:hover { color: var(--accent); text-decoration: none; }
+.post-summary .date { color: var(--muted); font-size: 0.85rem; margin: 0 0 0.5rem; }
+
+.post { padding: 4rem 0; }
+.post-header { margin-bottom: 2rem; }
+.post-header h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); margin: 0 0 0.5rem; line-height: 1.2; }
+.post-header .date { color: var(--muted); margin: 0 0 1rem; }
+.post-header .lead { color: var(--muted); font-size: 1.1rem; border-left: 3px solid var(--accent); padding-left: 1rem; }
+
+.post-content { max-width: 720px; }
+.post-content h2 { font-size: 1.35rem; border-bottom: 2px solid var(--accent); margin-top: 2rem; }
+.post-content h3 { font-size: 1.1rem; color: var(--accent-2); margin-top: 1.5rem; }
+.post-content p, .post-content ul, .post-content ol { margin-bottom: 1rem; color: var(--muted); }
+.post-content ul, .post-content ol { padding-left: 1.25rem; }
+.post-content li { margin-bottom: 0.4rem; }
+.post-content strong { color: var(--text); }
+.post-content a { text-decoration: underline; }
+
+.post-footer { margin-top: 3rem; padding-top: 1rem; border-top: 1px solid var(--surface-2); }
