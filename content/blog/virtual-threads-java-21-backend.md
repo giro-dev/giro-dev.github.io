@@ -1,6 +1,6 @@
 ---
 title: "Virtual threads in Java 21: a practical guide for backend platforms"
-date: 2026-07-24T00:00:00Z
+date: 2026-07-25T00:00:00Z
 description: "A hands-on tutorial on Java 21 virtual threads: how they work, how to enable them in Spring Boot, and the pitfalls to avoid."
 ---
 
