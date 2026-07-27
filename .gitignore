@@ -3,3 +3,7 @@
 resources/
 public/
 docs/
+
+# Gruvbox theme preview (hugo.gruvbox.toml) — regenerated locally
+node_modules/
+/hugo_stats.json
