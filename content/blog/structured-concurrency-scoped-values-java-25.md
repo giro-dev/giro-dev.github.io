@@ -1,7 +1,7 @@
 ---
 title: "Structured concurrency and scoped values in Java 25: replacing ThreadLocal in request pipelines"
 date: 2026-08-22T00:00:00Z
-description: "A hands-on tutorial on the Java 25 StructuredTaskScope and the finalized ScopedValue API: fanning out calls safely and propagating request context without ThreadLocal."
+description: "A hands-on tutorial on the Java 25 StructuredTaskScope and the ScopedValue API: fanning out calls safely and propagating request context without ThreadLocal."
 aliases:
   - /blog/structured-concurrency-scoped-values-java-21/
 ---
