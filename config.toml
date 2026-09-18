@@ -1,21 +1,66 @@
 baseURL = 'https://giro-dev.github.io/'
-languageCode = 'en-us'
 title = 'Albert Giró Quer — Lead Software Engineer & Software Architect'
 publishDir = 'public'
 disableKinds = ['taxonomy', 'term', 'RSS']
+defaultContentLanguage = 'en'
+defaultContentLanguageInSubdir = false
 
 [params]
   name = 'Albert Giró Quer'
-  tagline = 'Lead Software Engineer • Software Architect • Java • Spring Boot • Distributed Systems'
-  location = 'Madrid, Spain'
-  availability = 'Open to Staff / Principal / Platform Engineering roles across Europe'
-  summary = 'Software engineer specialised in enterprise backend platforms, evolved into technical leadership, architecture and the translation of complex requirements into scalable, maintainable systems. I stay close to the code while shaping the systems around it.'
   email = 'agiroq@uoc.edu'
   linkedin = 'https://www.linkedin.com/in/albert-giro-quer'
   github = 'https://github.com/giro-dev'
-  blogTitle = 'Blog'
-  blogSubtitle = 'Notes on backend engineering, architecture and AI.'
 
-  [params.contact]
-    heading = "Let's build something solid"
-    text = 'I am interested in Staff Engineer, Principal Engineer and Software Architect roles in product-led companies. If you are working on distributed systems, platform engineering or AI-powered backends, I would love to hear from you.'
+[languages.en]
+  languageCode = 'en-us'
+  languageName = 'English'
+  weight = 1
+  title = 'Albert Giró Quer — Lead Software Engineer & Software Architect'
+
+  [languages.en.params]
+    tagline = 'Lead Software Engineer • Software Architect • Java • Spring Boot • Distributed Systems'
+    location = 'Madrid, Spain'
+    availability = 'Open to Staff / Principal / Platform Engineering roles across Europe'
+    summary = 'Software engineer specialised in enterprise backend platforms, evolved into technical leadership, architecture and the translation of complex requirements into scalable, maintainable systems. I stay close to the code while shaping the systems around it.'
+    blogTitle = 'Blog'
+    blogSubtitle = 'Notes on backend engineering, architecture and AI.'
+
+    [languages.en.params.contact]
+      heading = "Let's build something solid"
+      text = 'I am interested in Staff Engineer, Principal Engineer and Software Architect roles in product-led companies. If you are working on distributed systems, platform engineering or AI-powered backends, I would love to hear from you.'
+
+[languages.ca]
+  languageCode = 'ca'
+  languageName = 'Català'
+  weight = 2
+  title = 'Albert Giró Quer — Lead Software Engineer i Arquitecte de Software'
+
+  [languages.ca.params]
+    tagline = 'Lead Software Engineer • Arquitecte de Software • Java • Spring Boot • Sistemes Distribuïts'
+    location = 'Madrid, Espanya'
+    availability = 'Disponible per a rols de Staff / Principal / Platform Engineering a Europa'
+    summary = 'Enginyer de software especialitzat en plataformes backend empresarials. He evolucionat cap al lideratge tècnic, l’arquitectura i la traducció de requisits complexos en sistemes escalables i fàcils de mantenir. Continuo a prop del codi mentre dissenyo els sistemes.'
+    blogTitle = 'Blog'
+    blogSubtitle = 'Notes sobre enginyeria backend, arquitectura i IA.'
+
+    [languages.ca.params.contact]
+      heading = 'Construïm alguna cosa sòlida'
+      text = 'M’interessen els rols de Staff Engineer, Principal Engineer i Software Architect en empreses orientades al producte. Si treballes amb sistemes distribuïts, platform engineering o backends amb IA, m’agradaria parlar amb tu.'
+
+[languages.es]
+  languageCode = 'es'
+  languageName = 'Español'
+  weight = 3
+  title = 'Albert Giró Quer — Lead Software Engineer y Arquitecto de Software'
+
+  [languages.es.params]
+    tagline = 'Lead Software Engineer • Arquitecto de Software • Java • Spring Boot • Sistemas Distribuidos'
+    location = 'Madrid, España'
+    availability = 'Disponible para puestos de Staff / Principal / Platform Engineering en Europa'
+    summary = 'Ingeniero de software especializado en plataformas backend empresariales. He evolucionado hacia el liderazgo técnico, la arquitectura y la traducción de requisitos complejos en sistemas escalables y fáciles de mantener. Sigo cerca del código mientras diseño los sistemas.'
+    blogTitle = 'Blog'
+    blogSubtitle = 'Notas sobre ingeniería backend, arquitectura e IA.'
+
+    [languages.es.params.contact]
+      heading = 'Construyamos algo sólido'
+      text = 'Me interesan puestos de Staff Engineer, Principal Engineer y Software Architect en empresas orientadas al producto. Si trabajas con sistemas distribuidos, platform engineering o backends con IA, me gustaría hablar contigo.'

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ site.Language.Lang }}">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,18 +13,27 @@
   <meta property="og:type" content="website">
   <meta property="og:url" content="{{ .Permalink }}">
   <title>{{ if .IsHome }}{{ .Site.Title }}{{ else }}{{ .Title }} | {{ .Site.Title }}{{ end }}</title>
+  {{ range .AllTranslations }}<link rel="alternate" hreflang="{{ .Language.Lang }}" href="{{ .Permalink }}">{{ end }}
+  {{ $english := . }}
+  {{ range .AllTranslations }}{{ if eq .Language.Lang "en" }}{{ $english = . }}{{ end }}{{ end }}
+  <link rel="alternate" hreflang="x-default" href="{{ $english.Permalink }}">
   <link rel="stylesheet" href="{{ "css/style.css" | relURL }}">
 </head>
 <body>
   <header>
     <nav class="container">
-      <span class="brand"><a href="{{ "/" | relURL }}">Albert Giró</a></span>
+      <span class="brand"><a href="{{ site.Home.RelPermalink }}">Albert Giró</a></span>
       <ul>
-        <li><a href="{{ "/" | relURL }}#about">About</a></li>
-        <li><a href="{{ "/" | relURL }}#experience">Experience</a></li>
-        <li><a href="{{ "/" | relURL }}#portfolio">Portfolio</a></li>
-        <li><a href="{{ "/blog" | relURL }}">Blog</a></li>
-        <li><a href="{{ "/" | relURL }}#contact">Contact</a></li>
+        <li><a href="{{ site.Home.RelPermalink }}#about">{{ i18n "nav_about" }}</a></li>
+        <li><a href="{{ site.Home.RelPermalink }}#experience">{{ i18n "nav_experience" }}</a></li>
+        <li><a href="{{ site.Home.RelPermalink }}#portfolio">{{ i18n "nav_portfolio" }}</a></li>
+        <li><a href="{{ (site.GetPage "blog").RelPermalink }}">{{ i18n "nav_blog" }}</a></li>
+        <li><a href="{{ site.Home.RelPermalink }}#contact">{{ i18n "nav_contact" }}</a></li>
+      </ul>
+      <ul class="lang-switch">
+        {{ range sort .AllTranslations "Language.Weight" }}
+        <li><a href="{{ .Permalink }}" hreflang="{{ .Language.Lang }}" lang="{{ .Language.Lang }}" data-lang="{{ .Language.Lang }}"{{ if eq .Language.Lang site.Language.Lang }} class="active" aria-current="page"{{ end }}>{{ .Language.LanguageName }}</a></li>
+        {{ end }}
       </ul>
     </nav>
   </header>
@@ -33,8 +42,27 @@
 
   <footer>
     <div class="container">
-      <p>&copy; {{ now.Year }} {{ .Site.Params.name }}. Built as an online engineering portfolio with Hugo.</p>
+      <p>&copy; {{ now.Year }} {{ .Site.Params.name }}. {{ i18n "footer_built" }}</p>
     </div>
   </footer>
+  <script>
+    (function () {
+      var current = document.documentElement.lang;
+      var links = document.querySelectorAll('.lang-switch a[data-lang]');
+      var available = {};
+      links.forEach(function (a) { available[a.dataset.lang] = a.href; a.addEventListener('click', function () { localStorage.setItem('lang', a.dataset.lang); }); });
+      if (sessionStorage.getItem('langRedirected')) return;
+      var preferred = localStorage.getItem('lang');
+      if (!preferred && current === 'en') {
+        var langs = navigator.languages || [navigator.language];
+        for (var i = 0; i < langs.length; i++) {
+          var code = (langs[i] || '').toLowerCase().split('-')[0];
+          if (available[code]) { preferred = code; break; }
+        }
+      }
+      sessionStorage.setItem('langRedirected', '1');
+      if (preferred && preferred !== current && available[preferred]) { window.location.replace(available[preferred]); }
+    })();
+  </script>
 </body>
 </html>

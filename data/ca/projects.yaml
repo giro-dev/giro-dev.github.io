@@ -1,0 +1,56 @@
+- name: Matriarch
+  description: Llibreria Java que implementa el patró Object Mother amb una API fluent. Automatitza la generació de dades de prova per a POJOs i Records, amb càrrega de patrons Jackson/YAML i integració amb JUnit 5.
+  points:
+    - API pública clara amb builders i estratègies d’override
+    - Publicació a Maven Central i CI amb GitHub Actions
+    - Lloc de documentació amb Hugo i suport per a llavors deterministes
+  links:
+    - text: Codi
+      url: https://github.com/giro-dev/matriarch
+- name: AI Game Master
+  description: Plataforma d’orquestració d’un Game Master amb IA per a Foundry VTT. Backend amb Spring Boot i integració VTT amb TypeScript, LLM, cerca vectorial i pipelines d’àudio en temps real.
+  points:
+    - Pipeline RAG amb OpenSearch per recuperar regles i història
+    - Arquitectura LLM multiagent (Director, Verifier, ItemGen)
+    - Integració de Whisper STT, Piper TTS i LiveKit/WebSocket
+  links:
+    - text: Codi
+      url: https://github.com/giro-dev/AI-game-master
+- name: Bruno
+  description: Fork open-source d’un client d’APIs (Electron + React + Node.js). Alternativa lleugera i compatible amb Git a Postman per explorar i provar APIs.
+  points:
+    - Frontend React i IPC del procés principal d’Electron
+    - Format de peticions de text pla .bru
+    - Runtime d’scripts, convertidors i emmagatzematge local-first
+  links:
+    - text: Codi
+      url: https://github.com/giro-dev/bruno
+- name: Disk Sentinel
+  description: Gestor de repòs de discs NO-WAKEUP per a Debian, Ubuntu i Proxmox. Manté els discs inactius aturats i evita que tasques programades els activin per error.
+  points:
+    - Observació a nivell de sistema i correlació de processos
+    - Daemon lleuger per a laboratoris domèstics
+    - Programació de sistemes i automatització pràctiques
+  links:
+    - text: Codi
+      url: https://github.com/giro-dev/disk-sentinel
+- name: Registre
+  description: Aplicació personal de productivitat amb plantilles dinàmiques, importació i exportació JSON i una UI responsive moderna. Pensada per capturar i organitzar registres estructurats.
+  points:
+    - Tipus de camps configurables i plantilles basades en emojis
+    - Importació de dades al client i motor de plantilles
+    - Iteració de la navegació moderna i del disseny visual
+  links:
+    - text: Codi
+      url: https://github.com/giro-dev/registre
+- name: Foundry VTT Modules
+  description: Col·lecció de mòduls que amplien Foundry VTT, amb transcripció de sessions en directe amb LiveKit, localització al català i resums de sessions per a RPG de taula.
+  points:
+    - Transcripció d’àudio en temps real i generació de resums
+    - Integració VTT amb TypeScript i empaquetat
+    - i18n i eines orientades a la comunitat
+  links:
+    - text: Play Logger
+      url: https://github.com/giro-dev/foundry-vtt-play-logger
+    - text: Dee Sanction
+      url: https://github.com/giro-dev/foundryvtt-dee-sanction

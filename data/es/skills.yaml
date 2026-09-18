@@ -1,0 +1,30 @@
+- category: Backend
+  items:
+    - Java
+    - Spring Boot
+    - Spring Batch
+    - Spring Security
+    - REST APIs
+    - JUnit 5
+- category: Arquitectura
+  items:
+    - Domain-Driven Design
+    - Hexagonal Architecture
+    - Event-Driven Architecture
+    - Microservices
+    - API Design
+- category: Nube y datos
+  items:
+    - Docker
+    - Kubernetes
+    - CI/CD
+    - PostgreSQL
+    - RabbitMQ
+    - OpenSearch
+- category: Liderazgo
+  items:
+    - Liderazgo técnico
+    - Ingeniería de requisitos
+    - Gestión de stakeholders
+    - Diseño de software
+    - Mentoría
