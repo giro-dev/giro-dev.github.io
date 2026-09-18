@@ -3,28 +3,25 @@ title: "Observability for virtual threads: tracing a Spring Boot 3 request with 
 date: 2026-08-24T00:00:00Z
 description: "A hands-on tutorial on keeping traces, logs and metrics intact after switching a Spring Boot service to virtual threads: Micrometer Observation, OTLP export, context propagation across fan-out, and detecting pinning and starvation."
 ---
+# Observability for virtual threads: tracing a Spring Boot 3 request with Micrometer and OpenTelemetry
 
-## Problem
+## 1. Overview
 
-Flipping one property moves a Spring Boot service onto virtual threads:
+One property moves a Spring Boot service to virtual threads:
 
 ```properties
 spring.threads.virtual.enabled=true
 ```
 
-Throughput improves, and then observability quietly degrades in three ways:
+After this change, throughput can improve. Observability can also lose important information. Traces can lose child spans, logs can lose their trace ids, and thread-pool metrics no longer show the real limit.
 
-1. **Traces lose spans.** Anything that hands work to another thread — an `ExecutorService`, a `CompletableFuture`, a reactive `publishOn` — no longer sees the current span, because the span lives in a `ThreadLocal` that the new thread does not have. The parent span closes with no children, or worse, a child span shows up as its own trace root.
-2. **Logs lose correlation.** `traceId`/`spanId` reach the log line through the SLF4J MDC, another `ThreadLocal`. Same failure mode: the log line from a forked task carries an empty trace id, so a stack trace can no longer be joined to the request that produced it.
-3. **Metrics lose their saturation signal.** The Tomcat thread-pool gauges that used to answer "are we out of threads?" become meaningless: there is no pool. `ThreadMXBean.getThreadCount()` does not count virtual threads either, so the dashboards look permanently healthy while requests queue up behind a connection pool or a pinned carrier.
+In this post I will show how to fix these three problems. I will use Micrometer Observation, export data to OpenTelemetry, propagate context across every thread hop, and add metrics for a virtual-thread runtime.
 
-This post is a step-by-step guide to fixing all three: instrument with the Micrometer Observation API, export to OpenTelemetry, propagate context explicitly across every thread hop, and add the metrics that actually reveal saturation on a virtual-thread runtime.
+The examples use Java 25 (LTS) and Spring Boot 3.5.x. Everything except the structured-concurrency section also works on Java 21.
 
-Baseline: Java 25 (LTS), Spring Boot 3.5.x. Everything except the structured-concurrency section works on Java 21 too.
+## 2. Background: why the context disappears
 
-## Background: why the context disappears
-
-Micrometer's tracing bridge stores the current span in a `ThreadLocal`. That is not a flaw — it is the only way a library can be transparent to your code. The consequence is a simple rule:
+Micrometer's tracing bridge stores the current span in a `ThreadLocal`. This lets the library work without changes in business code. A new thread does not have that value unless I copy it.
 
 ```text
 Same thread            → context is visible, spans nest correctly
@@ -32,11 +29,11 @@ New thread, unwrapped  → context is empty, span becomes a new root
 New thread, wrapped    → context is restored, spans nest correctly
 ```
 
-With platform threads and a pooled executor, "wrapped" was usually somebody else's problem: Spring wrapped the executor for you, and pooled threads were few enough that a leaked MDC entry was survivable. On virtual threads, every request creates a thread and every fan-out creates more, so **every hop must be explicit**.
+With a platform-thread executor, Spring often wrapped the executor. There were also only a few pooled threads. With virtual threads, every request and every fan-out can create more threads. **Every hop must be explicit.**
 
-The tool for that is `io.micrometer:context-propagation`: a registry of `ThreadLocalAccessor`s that can *capture* all registered thread locals into an immutable `ContextSnapshot` and *restore* them on another thread. Micrometer registers `ObservationThreadLocalAccessor` (the observation and its span) and Spring Boot's logging setup contributes the MDC entries.
+The tool for this is `io.micrometer:context-propagation`. It uses `ThreadLocalAccessor`s to capture registered thread locals into an immutable `ContextSnapshot` and restore them on another thread. Micrometer registers `ObservationThreadLocalAccessor` for the observation and its span. Spring Boot's logging setup also contributes the MDC entries.
 
-## Step 1 — Dependencies and configuration
+## 3. Step 1: dependencies and configuration
 
 ```xml
 <dependency>
@@ -57,7 +54,7 @@ The tool for that is `io.micrometer:context-propagation`: a registry of `ThreadL
 </dependency>
 ```
 
-The bridge (`micrometer-tracing-bridge-otel`) turns Micrometer observations into OpenTelemetry spans; the exporter ships them over OTLP. Swap the bridge for `micrometer-tracing-bridge-brave` if your backend speaks Zipkin — the application code below does not change, which is the whole point of the Observation API.
+The `micrometer-tracing-bridge-otel` bridge turns Micrometer observations into OpenTelemetry spans. The exporter sends them over OTLP. I can use `micrometer-tracing-bridge-brave` for a Zipkin backend instead. The application code stays the same because it uses the Observation API.
 
 ```properties
 spring.application.name=orders-api
@@ -69,9 +66,9 @@ management.otlp.metrics.export.url=http://localhost:4318/v1/metrics
 management.endpoints.web.exposure.include=health,info,metrics,prometheus
 ```
 
-Sample at `1.0` in dev only. In production, prefer a low head-based probability plus tail sampling in the collector, so you keep the slow and failed traces without paying for the happy path.
+I use a sampling value of `1.0` only in development. In production, I prefer a low head-based probability and tail sampling in the collector. This keeps slow and failed traces without paying for every successful request.
 
-Two flags worth setting from day one, because they make the later diagnosis steps possible:
+These flags also help with the diagnosis steps later:
 
 ```bash
 java -XX:StartFlightRecording=filename=app.jfr,settings=profile,maxsize=512m \
@@ -79,9 +76,9 @@ java -XX:StartFlightRecording=filename=app.jfr,settings=profile,maxsize=512m \
      -jar orders-api.jar
 ```
 
-## Step 2 — Instrument with the Observation API, not the tracer
+## 4. Step 2: instrument with the Observation API
 
-Do not inject `Tracer` in business code. An `Observation` produces a span *and* a timer *and* (optionally) a log context from a single instrumentation point:
+I do not inject `Tracer` into business code. One `Observation` can create a span, a timer, and, if needed, a log context:
 
 ```java
 @Service
@@ -98,9 +95,14 @@ class OrderService {
 }
 ```
 
-The cardinality distinction is the part teams get wrong. Low-cardinality keys end up as **metric tags** — keep them to bounded enumerations (channel, region, outcome). High-cardinality keys are attached to the **span only**, which is where identifiers belong. Putting an order id in a low-cardinality key is how you turn a 20-series metric into a 2-million-series bill.
+The difference between the two kinds of keys is important:
 
-For coarse-grained instrumentation, `@Observed` is equivalent once the aspect is registered:
+- **Low-cardinality keys** — these become metric tags, so use bounded values such as channel, region, or outcome.
+- **High-cardinality keys** — these go to the span only, so identifiers belong here.
+
+Putting an order id in a low-cardinality key can turn a 20-series metric into a 2-million-series bill.
+
+For coarse-grained instrumentation, I can use `@Observed` after registering its aspect:
 
 ```java
 @Configuration
@@ -115,13 +117,13 @@ class ObservationConfig {
 public Authorization authorize(Payment payment) { ... }
 ```
 
-Custom naming and tagging for a whole family of observations belongs in an `ObservationConvention`, not scattered across call sites — that keeps span names stable when the method is renamed.
+For one family of observations, I keep naming and tagging in an `ObservationConvention`. This keeps span names stable when a method is renamed.
 
-## Step 3 — Propagate context across every thread hop
+## 5. Step 3: propagate context across every thread hop
 
-This is the step that actually fixes broken traces. Three patterns cover almost all code.
+This step fixes the broken traces. Three patterns cover most code.
 
-**3a. Executors: wrap once, at the bean definition.**
+### 5.1 Executors: wrap once at the bean definition
 
 ```java
 @Bean
@@ -135,9 +137,9 @@ ExecutorService appExecutor(ObservationRegistry registry) {
 }
 ```
 
-Every task submitted to `appExecutor` now runs with the submitting thread's observation and MDC restored, and cleared afterwards. Never inject a raw `Executors.newVirtualThreadPerTaskExecutor()` into application code — make the wrapped bean the only one available.
+Every task submitted to `appExecutor` now restores the observation and MDC from the submitting thread. The context is cleared after the task. I never inject a raw `Executors.newVirtualThreadPerTaskExecutor()` into application code. The wrapped bean should be the only executor available.
 
-For Spring's own `@Async` and `TaskExecutor`, the equivalent is a `TaskDecorator`:
+For Spring's `@Async` and `TaskExecutor`, I use a `TaskDecorator`:
 
 ```java
 @Bean
@@ -150,9 +152,9 @@ TaskDecorator contextPropagatingDecorator() {
 }
 ```
 
-Spring Boot applies a `TaskDecorator` bean to its auto-configured `SimpleAsyncTaskExecutor` (the one used when `spring.threads.virtual.enabled=true`), so a single bean covers `@Async`, `@Scheduled` and MVC async dispatches.
+Spring Boot applies a `TaskDecorator` bean to its auto-configured `SimpleAsyncTaskExecutor`, which is used when `spring.threads.virtual.enabled=true`. One bean therefore covers `@Async`, `@Scheduled`, and MVC async dispatches.
 
-**3b. `CompletableFuture` chains: capture at the boundary.**
+### 5.2 `CompletableFuture` chains: capture at the boundary
 
 ```java
 ContextSnapshot snapshot = ContextSnapshotFactory.builder().build().captureAll();
@@ -162,11 +164,11 @@ CompletableFuture
         .thenApply(snapshot.wrap(this::applyDiscount));
 ```
 
-Capture *once*, outside the chain: capturing inside a lambda that already runs on the wrong thread captures nothing useful.
+I capture once outside the chain. If I capture inside a lambda that is already on the wrong thread, there is no useful context to capture.
 
-**3c. Structured concurrency: bind explicitly inside each fork.**
+### 5.3 Structured concurrency: bind inside each fork
 
-`ScopedValue` bindings are inherited by subtasks; `ThreadLocal`-based observation context is not. So a `StructuredTaskScope` fan-out needs the snapshot passed in:
+`ScopedValue` bindings are inherited by subtasks. Thread-local observation context is not. A `StructuredTaskScope` fan-out therefore needs the snapshot passed to each fork:
 
 ```java
 Dashboard load(long userId) throws InterruptedException {
@@ -182,23 +184,23 @@ Dashboard load(long userId) throws InterruptedException {
 }
 ```
 
-Each subtask now produces a child span under the request span, and cancellation still works because `wrap` returns the same callable semantics. (`StructuredTaskScope` is still a preview API in Java 25 — keep it behind one helper class.)
+Each subtask now creates a child span under the request span. Cancellation still works because `wrap` returns the same callable semantics. `StructuredTaskScope` is still a preview API in Java 25, so I keep it behind one helper class.
 
-## Step 4 — Correlate logs with traces
+## 6. Step 4: correlate logs with traces
 
-Spring Boot puts `traceId` and `spanId` in the MDC as soon as a tracer is on the classpath. Make them visible:
+Spring Boot puts `traceId` and `spanId` in the MDC when a tracer is on the classpath. I make them visible in the log pattern:
 
 ```properties
 logging.pattern.level=%5p [${spring.application.name:},%X{traceId:-},%X{spanId:-}]
 ```
 
-A log line then reads:
+A log line then looks like this:
 
 ```text
 INFO  [orders-api,3f9a1c0b5e2d4a77,7c1d9e42ab35] c.g.orders.OrderService : order accepted
 ```
 
-Business context that is not part of the trace identity (tenant, correlation id from a header) is best bound as a `ScopedValue` at the edge and mirrored into the MDC there — one binding site per entry point:
+Other business context, such as a tenant or a correlation id from a header, is not part of the trace identity. I bind it as a `ScopedValue` at the edge and mirror it into the MDC there. I use one binding site for each entry point:
 
 ```java
 @Component
@@ -223,13 +225,13 @@ class TenantFilter extends OncePerRequestFilter {
 }
 ```
 
-The `finally` is not optional. On virtual threads the thread dies with the request, so a leak is bounded — but the MDC is also copied by `captureAll()`, and a stale entry propagates into every forked task.
+The `finally` is required. The request thread ends after the request, but `captureAll()` also copies the MDC. A stale entry can therefore reach every forked task.
 
-## Step 5 — Metrics that still mean something
+## 7. Step 5: metrics that still mean something
 
-The pool gauges are gone. Replace them with signals that describe *the actual bottleneck*, which after the switch is almost never the thread count.
+The old pool gauges are no longer useful. I replace them with signals for the real bottleneck, which is usually not the thread count after the switch.
 
-**In-flight requests** — the closest thing to a saturation gauge:
+**In-flight requests** are the closest saturation gauge:
 
 ```java
 @Bean
@@ -240,22 +242,22 @@ MeterBinder inFlightRequests(HttpRequestCounter counter) {   // a LongAdder incr
 }
 ```
 
-**Connection pool utilisation** — the real ceiling. HikariCP already publishes it; alert on `hikaricp.connections.pending > 0` and on `hikaricp.connections.acquire` p99. A virtual-thread service under load queues *here*, not on threads.
+**Connection pool utilisation** is the real ceiling. HikariCP already publishes it. I alert on `hikaricp.connections.pending > 0` and on `hikaricp.connections.acquire` p99. A virtual-thread service under load queues here, not on the threads.
 
-**Downstream latency and errors** per client, from `http.client.requests` — with virtual threads, a slow dependency no longer shows up as thread exhaustion, so it must be visible directly.
+**Downstream latency and errors** should be measured for each client with `http.client.requests`. A slow dependency no longer appears as thread exhaustion, so I need to show it directly.
 
-**Pinning events**, via JFR (see Step 6), exported as a counter if you run a JFR-to-metrics bridge.
+**Pinning events** come from JFR, described in Step 8. If I run a JFR-to-metrics bridge, I can export them as a counter.
 
-Two anti-patterns to retire from dashboards and alerts:
+I remove these two kinds of dashboard and alert:
 
-- `jvm.threads.live` as a saturation signal — it excludes virtual threads, so it stays flat under any load.
-- `tomcat.threads.busy` / `executor.pool.*` on a virtual-thread runtime — the gauges are either absent or describe a scheduler you do not size per request.
+- `jvm.threads.live` as a saturation signal — it does not include virtual threads, so it stays flat under load.
+- `tomcat.threads.busy` and `executor.pool.*` on a virtual-thread runtime — these gauges are absent or describe a scheduler that is not sized per request.
 
-## Step 6 — Detect pinning and starvation
+## 8. Step 6: detect pinning and starvation
 
-Since Java 24 (JEP 491), blocking inside `synchronized` no longer pins a carrier thread, so the historical `-Djdk.tracePinnedThreads` sweep is obsolete (the property was removed). What is left pins rarely but hurts: native frames (JNI, some drivers) and blocking during class initialization.
+Since Java 24 (JEP 491), blocking inside `synchronized` no longer pins a carrier thread. The old `-Djdk.tracePinnedThreads` sweep is therefore obsolete, and the property was removed. Native frames such as JNI or some drivers, and blocking during class initialization, can still pin a carrier.
 
-JFR is the supported way to see it:
+JFR is the supported way to see these events:
 
 ```bash
 # 1. Record (or use -XX:StartFlightRecording as in Step 1)
@@ -271,13 +273,13 @@ jfr print --events jdk.VirtualThreadSubmitFailed vt.jfr
 jfr summary vt.jfr | grep VirtualThread
 ```
 
-And for a stalled service, the structured thread dump is the fastest read, because it groups subtasks under the scope that forked them:
+For a stalled service, I use a structured thread dump. It groups subtasks under the scope that created them:
 
 ```bash
 jcmd <pid> Thread.dump_to_file -format=json dump.json
 ```
 
-Interpretation guide:
+This table gives a starting point:
 
 | Symptom | Likely cause | Where to look |
 |---|---|---|
@@ -287,9 +289,9 @@ Interpretation guide:
 | Traces with orphan roots | An unwrapped thread hop | Step 3 — find the raw executor |
 | Log lines with empty `traceId` | Same, on the MDC side | Step 3a decorator coverage |
 
-## Step 7 — Test the instrumentation
+## 9. Step 7: test the instrumentation
 
-Broken propagation is a silent failure, so assert on it. `micrometer-observation-test` makes the observation graph assertable:
+Context propagation can fail without an obvious error, so I assert on it. `micrometer-observation-test` makes the observation graph testable:
 
 ```java
 @Test
@@ -308,7 +310,7 @@ void fan_out_creates_child_observations() {
 }
 ```
 
-And with the OpenTelemetry bridge in place, an integration test can assert the trace actually has one root:
+With the OpenTelemetry bridge, an integration test can also check that the trace has one root:
 
 ```java
 @SpringBootTest(properties = "management.tracing.sampling.probability=1.0")
@@ -328,29 +330,31 @@ class TracePropagationTest {
 }
 ```
 
-The `distinct().hasSize(1)` assertion is the regression test for Step 3: it fails the moment somebody submits work to an unwrapped executor.
+The `distinct().hasSize(1)` assertion checks Step 5. It fails when somebody submits work to an executor that is not wrapped.
 
-## Common pitfalls
+## 10. Common pitfalls
 
-- **Wrapping the executor at the call site instead of the bean.** One forgotten call site breaks a subset of traces, which is far harder to notice than all of them.
-- **Capturing the snapshot lazily.** `captureAll()` must run on the thread that *has* the context. Inside the task, it captures emptiness.
-- **Leaving `sampling.probability=1.0` in production.** Full sampling on a virtual-thread service — which happily runs far more concurrent requests than before — is how you discover your collector's rate limit.
-- **Instrumenting with `Tracer` directly.** You get a span but no timer, no metric tags, and no way to switch backends. Use `Observation`.
-- **High-cardinality keys as low-cardinality ones.** Ids, URLs with path variables and stack messages must never become metric tags.
-- **Alerting on thread counts.** Move the alert to the connection pool, the in-flight gauge and downstream latency.
-- **Assuming `@Async` is covered.** It is only covered if a `TaskDecorator` bean exists; check it with a test that asserts the trace id inside the async method.
-- **Forgetting the non-HTTP entry points.** Kafka listeners and scheduled jobs start with no context; they need their own observation opened at the entry point, or every span they produce is an orphan.
+- **Wrap the executor at the bean, not at each call site.** One forgotten call site then breaks only some traces, which is difficult to find.
+- **Capture the snapshot at the right time.** `captureAll()` must run on a thread that has the context. Inside the task, it captures an empty context.
+- **Do not leave `sampling.probability=1.0` in production.** A virtual-thread service can run many more concurrent requests. Full sampling can hit the collector's rate limit.
+- **Use Observation instead of `Tracer` directly.** Observation gives a span, a timer, metric tags, and a way to change tracing backends.
+- **Keep high-cardinality keys out of low-cardinality keys.** Ids, URLs with path variables, and stack messages must not become metric tags.
+- **Do not alert on thread counts.** Alert on the connection pool, the in-flight gauge, and downstream latency.
+- **Check that `@Async` is covered.** It is covered only when a `TaskDecorator` bean exists. Add a test that checks the trace id inside the async method.
+- **Cover non-HTTP entry points.** Kafka listeners and scheduled jobs start without a context. Open an observation at each entry point or their spans become orphan roots.
 
-## Outcome
+## 11. Conclusion
 
-Virtual threads do not break observability — `ThreadLocal`-based context plus implicit thread hops do. The fix is mechanical:
+Virtual threads do not break observability by themselves. The problem is thread-local context combined with thread hops that do not copy it.
 
-1. Instrument with the **Observation API**, keeping low- and high-cardinality keys separate.
-2. Export over **OTLP**, sampling conservatively in production.
-3. Make **every thread hop explicit**: wrapped executor beans, a `TaskDecorator`, `snapshot.wrap` for futures and `StructuredTaskScope` forks.
-4. Put `traceId`/`spanId` in the log pattern and bind business context once per entry point, with cleanup.
-5. Replace pool gauges with **in-flight requests, connection-pool pressure and downstream latency**.
+I use these steps:
+
+1. Instrument with the **Observation API** and keep low- and high-cardinality keys separate.
+2. Export over **OTLP** and sample carefully in production.
+3. Make **every thread hop explicit** with wrapped executor beans, a `TaskDecorator`, and `snapshot.wrap` for futures and `StructuredTaskScope` forks.
+4. Put `traceId` and `spanId` in the log pattern. Bind business context once for each entry point and clean it up.
+5. Replace pool gauges with **in-flight requests, connection-pool pressure, and downstream latency**.
 6. Watch `jdk.VirtualThreadPinned` and `jdk.VirtualThreadSubmitFailed` in JFR instead of the removed pinning property.
-7. **Assert propagation in tests** — one trace id per request is a cheap, high-value invariant.
+7. **Test propagation** by checking that one request has one trace id.
 
-Do these seven and the switch to virtual threads becomes what it should be: a throughput change, not a visibility change.
+With these steps, switching to virtual threads changes throughput without changing what I can see.

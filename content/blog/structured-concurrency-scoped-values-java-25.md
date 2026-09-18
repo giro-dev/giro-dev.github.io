@@ -5,16 +5,15 @@ description: "A hands-on tutorial on the Java 25 StructuredTaskScope and the Sco
 aliases:
   - /blog/structured-concurrency-scoped-values-java-21/
 ---
+# Structured concurrency and scoped values in Java 25: replacing ThreadLocal in request pipelines
 
-## Problem
+## 1. Overview
 
-Once a service runs on virtual threads, two old habits start to hurt.
+Virtual threads make it cheap to run many tasks. Two older patterns still cause problems in request pipelines: starting fan-out tasks without a shared scope, and storing request context in `ThreadLocal`.
 
-The first is **unstructured fan-out**. A request handler submits three downstream calls to an executor, collects the futures and waits. If one call fails, the others keep running: wasted work, leaked connections, and a latency floor set by the slowest sibling. Cancellation is manual, and error handling is a pile of `try/catch` around `Future.get()`.
+In this post I will show how `StructuredTaskScope` and `ScopedValue` solve these problems in Java 25. I will also show how to move from the Java 21 preview API and which problems still need attention.
 
-The second is **`ThreadLocal` context propagation**. Tenant id, correlation id and user principal are traditionally stashed in a `ThreadLocal`. That works when threads are scarce and pooled — and breaks in two ways when they are not: the value is invisible to the child tasks you fan out to, and with millions of short-lived virtual threads each holding mutable per-thread state, memory and lifecycle become a real problem.
-
-Java 25 (LTS) is the right baseline to fix both:
+Java 25 (LTS) is the baseline for this post:
 
 | Feature | Status in Java 21 | Status in Java 25 |
 |---|---|---|
@@ -22,11 +21,9 @@ Java 25 (LTS) is the right baseline to fix both:
 | Structured concurrency | Preview (JEP 453) | Preview, redesigned API (JEP 505) |
 | `synchronized` pinning virtual threads | Yes | **No** — fixed in Java 24 (JEP 491) |
 
-This post is a step-by-step guide to both APIs *as they look in Java 25*, with the migration path from the Java 21 shape and the traps that remain.
+## 2. Background: what structured concurrency gives me
 
-## Background: what "structured" buys you
-
-Structured concurrency applies the rule that made structured programming work — *control flow enters and leaves a block at one place* — to threads:
+Structured concurrency uses the same idea as structured programming. Work starts inside a block and ends inside that block:
 
 ```text
 Unstructured (executor)                Structured (StructuredTaskScope)
@@ -37,11 +34,11 @@ cancellation is manual bookkeeping     scope close() joins everything
 stack traces lose the caller           parent/child relation is explicit
 ```
 
-The invariant: **when the block exits, no forked task is still running.** No orphans, no leaks.
+The rule is simple: **when the block exits, no forked task is still running.** There are no orphan tasks or leaked tasks.
 
-## Step 1 — Fan out with `StructuredTaskScope`
+## 3. Step 1: fan out with `StructuredTaskScope`
 
-In Java 25 a scope is opened with the static factory `StructuredTaskScope.open()` — the public constructors and the `ShutdownOnFailure` / `ShutdownOnSuccess` subclasses from the Java 21 preview are gone. The zero-arg factory covers the common case: *wait for all subtasks to succeed, cancel everything on the first failure*.
+In Java 25, I open a scope with the static factory `StructuredTaskScope.open()`. The public constructors and the `ShutdownOnFailure` and `ShutdownOnSuccess` subclasses from the Java 21 preview are gone. The no-argument factory covers the common case: wait for all subtasks to succeed and cancel everything on the first failure.
 
 ```java
 record Dashboard(User user, List<Order> orders) {}
@@ -58,21 +55,21 @@ Dashboard loadDashboard(long userId) throws InterruptedException {
 }
 ```
 
-Compared with the Java 21 preview, three things changed and one thing got simpler:
+Compared with the Java 21 preview, three things changed and one part became simpler:
 
-- `new StructuredTaskScope.ShutdownOnFailure()` → `StructuredTaskScope.open()`.
-- `scope.join(); scope.throwIfFailed();` → a single `scope.join()`, which throws `StructuredTaskScope.FailedException` with the subtask's exception as the cause.
-- `scope.joinUntil(instant)` → a timeout is now part of the scope's *configuration* (Step 3).
+- `new StructuredTaskScope.ShutdownOnFailure()` changed to `StructuredTaskScope.open()`.
+- `scope.join(); scope.throwIfFailed();` changed to one `scope.join()`, which throws `StructuredTaskScope.FailedException` with the subtask exception as its cause.
+- `scope.joinUntil(instant)` changed to a timeout in the scope configuration in Step 5.
 
-What you still get for free:
+I still get these behaviours:
 
-1. If `userClient.fetch` throws, the `orders` subtask is **interrupted immediately** — no wasted downstream call.
-2. `join()` returns only when every subtask is done, and `close()` waits for the threads regardless, so nothing outlives the method.
-3. Only call `Subtask::get` **after** a successful `join()`; before that it throws `IllegalStateException`.
+1. If `userClient.fetch` throws, the `orders` subtask is **interrupted immediately**. This avoids a wasted downstream call.
+2. `join()` returns only when every subtask is done. `close()` also waits for all threads, so nothing outlives the method.
+3. I call `Subtask::get` only **after** a successful `join()`. Before that it throws `IllegalStateException`.
 
-Each `fork` runs on its own virtual thread, so a fan-out of 50 is as cheap as a fan-out of 2.
+Each fork runs on its own virtual thread. A fan-out of 50 is therefore as cheap as a fan-out of 2.
 
-Handle failures by catching `FailedException` and pattern-matching the cause:
+I handle failures by catching `FailedException` and matching its cause:
 
 ```java
 try (var scope = StructuredTaskScope.open()) {
@@ -85,9 +82,9 @@ try (var scope = StructuredTaskScope.open()) {
 }
 ```
 
-## Step 2 — Choose a `Joiner` instead of a shutdown policy
+## 4. Step 2: choose a `Joiner` instead of a shutdown policy
 
-Policy no longer lives in a subclass; it lives in a `Joiner` passed to `open`. Four factories cover almost everything:
+The policy is no longer in a subclass. I pass a `Joiner` to `open`. Four factories cover most cases:
 
 ```java
 // "AND": all results required, stream of completed subtasks, fail fast
@@ -111,7 +108,7 @@ try (var scope = StructuredTaskScope.open(Joiner.<Quote>anySuccessfulResultOrThr
 try (var scope = StructuredTaskScope.open(Joiner.<Quote>awaitAll())) { ... }
 ```
 
-`Joiner.allUntil(Predicate)` is the building block for custom policies: it yields *all* subtasks and cancels the scope as soon as your predicate returns `true`. With a predicate that never cancels, the classic "return what succeeded, ignore the rest" is a filter over the resulting stream:
+`Joiner.allUntil(Predicate)` is the base for custom policies. It yields all subtasks and cancels the scope when the predicate returns `true`. If the predicate never cancels, I can filter the result to keep successful tasks and ignore the rest:
 
 ```java
 try (var scope = StructuredTaskScope.open(Joiner.<Quote>allUntil(sub -> false))) {
@@ -123,11 +120,11 @@ try (var scope = StructuredTaskScope.open(Joiner.<Quote>allUntil(sub -> false)))
 }
 ```
 
-For anything more exotic, implement `Joiner` directly: `onFork` and `onComplete` return a `boolean` that cancels the scope, and `result()` produces what `join()` returns. Both callbacks run on subtask threads, so implementations must be thread safe — and a `Joiner` instance must never be reused across scopes.
+For another policy, I implement `Joiner` directly. `onFork` and `onComplete` return a `boolean` that can cancel the scope. `result()` creates the value returned by `join()`. Both callbacks run on subtask threads, so the implementation must be thread safe. I also create a new `Joiner` for every scope.
 
-## Step 3 — Configure timeouts, names and thread factories
+## 5. Step 3: configure timeouts, names, and thread factories
 
-The 2-arg `open` takes a function over the default `Configuration`. This is where the Java 21 `joinUntil` deadline went, and it now covers the *whole* fan-out including cancellation:
+The two-argument `open` takes a function over the default `Configuration`. This is where the Java 21 `joinUntil` deadline moved. The timeout now covers the whole fan-out, including cancellation:
 
 ```java
 try (var scope = StructuredTaskScope.open(
@@ -144,11 +141,12 @@ try (var scope = StructuredTaskScope.open(
 }
 ```
 
-Naming the scope and its threads is not cosmetic: structured thread dumps (`jcmd <pid> Thread.dump_to_file -format=json dump.json`) group subtasks under their owner, so a named scope is what makes a production stall readable.
+Naming the scope and its threads helps when I read a structured thread dump:
+`jcmd <pid> Thread.dump_to_file -format=json dump.json`. The dump groups subtasks under their owner. A name makes a production stall easier to read.
 
-## Step 4 — Replace `ThreadLocal` with `ScopedValue` (now final)
+## 6. Step 4: replace `ThreadLocal` with `ScopedValue`
 
-`ScopedValue` is a permanent API in Java 25: no `--enable-preview`, safe to expose in library signatures. A value is bound for the duration of a call, immutable inside it, and unbound automatically when the call returns:
+`ScopedValue` is final in Java 25. It needs no `--enable-preview` flag and is safe to expose in library signatures. A value is bound for one call, cannot change inside that call, and is unbound automatically when the call returns:
 
 ```java
 public final class RequestContext {
@@ -164,7 +162,7 @@ ScopedValue.where(RequestContext.TENANT, tenantId)
 TenantId tenant = RequestContext.TENANT.get();
 ```
 
-Bind several values by chaining on the carrier, and use `call` when the operation returns a value:
+I can bind several values by chaining on the carrier. I use `call` when the operation returns a value:
 
 ```java
 Report report = ScopedValue.where(RequestContext.TENANT, tenantId)
@@ -172,9 +170,9 @@ Report report = ScopedValue.where(RequestContext.TENANT, tenantId)
                            .call(() -> reportService.build());
 ```
 
-Note the API shape: the static `ScopedValue.runWhere`/`callWhere` helpers that existed in earlier previews were removed — `where(...).run(...)` / `where(...).call(...)` is the only form in Java 25.
+The API shape is important. The static `ScopedValue.runWhere` and `callWhere` helpers from earlier previews were removed. In Java 25, I use `where(...).run(...)` and `where(...).call(...)`.
 
-The differences that matter versus `ThreadLocal`:
+The important differences from `ThreadLocal` are:
 
 | | `ThreadLocal` | `ScopedValue` |
 |---|---|---|
@@ -184,23 +182,23 @@ The differences that matter versus `ThreadLocal`:
 | Inheritance | only via `InheritableThreadLocal`, copies the value | inherited by `StructuredTaskScope` forks, no copy |
 | Cost per thread | a map entry per thread | shared, read-only binding |
 
-Read defensively where a binding is not guaranteed:
+When a binding is not guaranteed, I read it defensively:
 
 ```java
 TenantId tenant = RequestContext.TENANT.orElse(TenantId.SYSTEM);   // Java 25: argument must not be null
 if (RequestContext.TENANT.isBound()) { /* ... */ }
 ```
 
-Rebinding for a nested call shadows the outer value only inside that call — it never mutates it:
+A nested call can bind a different value. It shadows the outer value only in that call and does not change the outer binding:
 
 ```java
 ScopedValue.where(RequestContext.TENANT, otherTenant)
            .run(() -> migrationJob.copyFrom());   // outer binding intact afterwards
 ```
 
-## Step 5 — Combine both: context that survives fan-out
+## 7. Step 5: combine both features
 
-This is where the two features pay off together. Scoped values are inherited by every subtask forked inside the scope, with no copying and no plumbing:
+This is where the two features work together. Every subtask forked inside the scope inherits scoped values. There is no copying and no argument plumbing:
 
 ```java
 Report buildReport(TenantId tenantId) throws InterruptedException {
@@ -221,23 +219,23 @@ private Sales loadSales() {
 }
 ```
 
-With `ThreadLocal` this only worked with `InheritableThreadLocal` plus a task-decorating executor — and silently broke whenever someone submitted work to a different pool.
+With `ThreadLocal`, this required `InheritableThreadLocal` and a task-decorating executor. It also broke silently when work was sent to another pool.
 
-## Step 6 — Migrating an existing pipeline
+## 8. Step 6: migrate an existing pipeline
 
-A safe, incremental order of operations:
+I use this order for an incremental migration:
 
-1. **Inventory** your `ThreadLocal`s — find them and their `set` calls:
+1. **Inventory** the `ThreadLocal`s and their `set` calls:
 
    ```bash
    grep -rn "ThreadLocal\|InheritableThreadLocal" src/main/java
    ```
 
-2. **Classify** each one: *request-scoped and read-only after the edge* (→ `ScopedValue`), or *mutable accumulator* (→ pass an explicit object; scoped values cannot be reassigned).
-3. **Bind at the edges only** — servlet filter, message listener, scheduled job entry point. One binding site per entry point, never in business code.
-4. **Convert fan-outs**: replace `executor.submit(...)` + `Future.get()` clusters with a `StructuredTaskScope`, choosing the `Joiner` from Step 2.
-5. **Delete the decorators**: `TaskDecorator`s, MDC-copying wrappers and `InheritableThreadLocal` hacks that existed only to move context across threads.
-6. **Keep MDC bridged** if you log with SLF4J — logging frameworks still read the MDC (a `ThreadLocal`), so set it from the scoped value at the edge:
+2. **Classify** each value. A request-scoped value that is read-only after the edge can use `ScopedValue`. A mutable accumulator needs an explicit mutable object because scoped values cannot be reassigned.
+3. **Bind at the edges only.** Use a servlet filter, message listener, or scheduled job entry point. Use one binding site per entry point, never business code.
+4. **Convert fan-outs.** Replace groups of `executor.submit(...)` and `Future.get()` with a `StructuredTaskScope`. Choose the `Joiner` from Step 4.
+5. **Delete the decorators.** Remove `TaskDecorator`s, MDC-copying wrappers, and `InheritableThreadLocal` code that existed only to move context between threads.
+6. **Keep MDC bridged** when using SLF4J. Logging frameworks still read the MDC, so set it from the scoped value at the edge:
 
    ```java
    ScopedValue.where(RequestContext.TENANT, tenantId).run(() -> {
@@ -246,7 +244,7 @@ A safe, incremental order of operations:
    });
    ```
 
-7. **Enable preview** for the structured concurrency half only (`ScopedValue` needs nothing):
+7. **Enable preview for structured concurrency only.** `ScopedValue` does not need it:
 
    ```xml
    <plugin>
@@ -262,7 +260,7 @@ A safe, incremental order of operations:
    java --enable-preview -jar app.jar
    ```
 
-   Preview classes are also compiled with a minor-version marker, so tests and runtime must use the *same* JDK feature release. Split the migration if you cannot ship `--enable-preview` yet: adopt `ScopedValue` now, keep executors for fan-out.
+   Preview classes have a minor-version marker. Tests and runtime must therefore use the same JDK feature release. If I cannot ship `--enable-preview`, I can split the migration: adopt `ScopedValue` now and keep executors for fan-out.
 
 ### Migration cheat sheet: Java 21 preview → Java 25
 
@@ -287,37 +285,37 @@ A safe, incremental order of operations:
 + implement Joiner.onComplete(Subtask) / result(), or use Joiner.allUntil(predicate)
 ```
 
-## Common pitfalls (and how to detect them)
+## 9. Common pitfalls and how to detect them
 
-- **Leaking a `Subtask` outside the scope.** Calling `get()` after the `try` block, or storing the subtask in a field, defeats the whole model. Read results *inside* the block and return plain values.
-- **Subtasks that ignore interrupts.** Cancellation is cooperative: a subtask blocked in a non-interruptible call delays `close()` indefinitely, because `close()` always waits for its threads. Make downstream clients interruptible and give them their own timeouts.
-- **Using a scope from another thread.** `fork`, `join` and `close` may only be called by the owner thread; `join` may only be called once, and `fork` never after `join`. Do not stash a scope in a bean field — create it per call.
-- **Reusing a `Joiner`.** A `Joiner` is stateful: create a fresh one per scope, never share or cache it.
-- **Expecting `ScopedValue` to be mutable.** There is no `set()`. If code needs to *write* context, pass a mutable holder explicitly, or restructure to return values.
-- **Unbound reads in background jobs.** `get()` on an unbound scoped value throws `NoSuchElementException`. Scheduled jobs and Kafka listeners are separate entry points and need their own binding — test that path explicitly:
+- **Do not leak a `Subtask` outside the scope.** Calling `get()` after the `try` block or storing a subtask in a field defeats the model. Read results inside the block and return plain values.
+- **Make subtasks respond to interrupts.** Cancellation is cooperative. A subtask in a non-interruptible call can delay `close()` indefinitely because `close()` always waits for its threads. Use interruptible downstream clients and give them their own timeouts.
+- **Use a scope from its owner thread only.** The owner thread must call `fork`, `join`, and `close`. `join` can run only once, and `fork` cannot run after `join`. Do not store a scope in a bean field; create it for each call.
+- **Create a new `Joiner` for every scope.** A `Joiner` is stateful, so never share or cache it.
+- **Do not expect `ScopedValue` to be mutable.** There is no `set()`. Pass a mutable holder explicitly or restructure the code to return values.
+- **Handle unbound reads in background jobs.** `get()` on an unbound scoped value throws `NoSuchElementException`. Scheduled jobs and Kafka listeners are separate entry points and need their own binding. Test this path:
 
   ```java
   assertThatThrownBy(() -> RequestContext.TENANT.get())
       .isInstanceOf(NoSuchElementException.class);
   ```
 
-  Also note `orElse(null)` is rejected since Java 25 — use `isBound()` when absence is legitimate.
-- **Assuming pinning is still the enemy.** Since Java 24 (JEP 491), blocking inside `synchronized` no longer pins a virtual thread, so the old `-Djdk.tracePinnedThreads` sweep is mostly obsolete. What remains are native frames and class-initialization blocking; watch the `jdk.VirtualThreadPinned` JFR event instead of the removed system property.
-- **Backpressure still isn't free.** Structured fan-out makes concurrency easy to create; connection pools and downstream rate limits remain the real capacity ceiling. Cap deliberately with a `Semaphore` or a bounded pool.
-- **Preview API drift.** Structured concurrency is on its fifth preview in Java 25 (a sixth is lined up for Java 26), so the API can still change between releases. Wrap fan-out in a thin internal helper (e.g. `Parallel.all(...)`) so an upgrade touches one class instead of hundreds of call sites.
+  `orElse(null)` is also rejected in Java 25. Use `isBound()` when absence is valid.
+- **Do not assume pinning is still the main problem.** Since Java 24 (JEP 491), blocking in `synchronized` no longer pins a virtual thread. Native frames and class-initialization blocking can still pin. Watch the `jdk.VirtualThreadPinned` JFR event instead of the removed system property.
+- **Backpressure is still needed.** Structured fan-out makes it easy to create concurrency. Connection pools and downstream rate limits remain the capacity limit. Use a `Semaphore` or a bounded pool when needed.
+- **Expect preview API changes.** Structured concurrency is on its fifth preview in Java 25, and a sixth is planned for Java 26. Put fan-out behind a small internal helper such as `Parallel.all(...)`, so an upgrade changes one class instead of many call sites.
 
-## Outcome
+## 10. Conclusion
 
-The two features fix different halves of the same problem. `StructuredTaskScope` makes concurrency *lexically bounded*: failures cancel siblings, a configured timeout applies to the whole fan-out, and nothing outlives the method. `ScopedValue` — final as of Java 25 — makes context *immutable and bounded*, so request metadata flows into forked subtasks without decorators and without per-thread state that scales with a million virtual threads.
+The two features solve different parts of the same problem. `StructuredTaskScope` bounds concurrency by scope: failures cancel siblings, one timeout covers the fan-out, and no task outlives the method. `ScopedValue`, which is final in Java 25, makes context immutable and bounded. Request metadata reaches forked subtasks without decorators and without per-thread state for every virtual thread.
 
-A checklist before adopting:
+Before I adopt them, I use this checklist:
 
-1. Move to Java 25 (LTS): `ScopedValue` ships unflagged and `synchronized` no longer pins carriers.
-2. Migrate `ThreadLocal`s that are request-scoped and read-only to `ScopedValue`, bound only at entry points.
-3. Replace `executor.submit` + `Future.get()` clusters with `StructuredTaskScope.open(...)` and an explicit `Joiner`.
+1. Move to Java 25 (LTS). `ScopedValue` needs no flag and `synchronized` no longer pins carriers.
+2. Move request-scoped, read-only `ThreadLocal`s to `ScopedValue`, bound only at entry points.
+3. Replace `executor.submit` and `Future.get()` groups with `StructuredTaskScope.open(...)` and an explicit `Joiner`.
 4. Move per-call timeouts to a scope-wide `withTimeout`, and name scopes so thread dumps stay readable.
-5. Bridge the logging MDC at the edge; delete inheritance hacks and task decorators.
-6. Cover the unbound path (jobs, listeners) and the cancellation path with tests.
-7. Isolate the still-preview structured concurrency API behind one helper class to keep upgrades cheap.
+5. Bridge the logging MDC at the edge and remove inheritance hacks and task decorators.
+6. Test the unbound path for jobs and listeners, and test cancellation.
+7. Keep the preview structured-concurrency API behind one helper class so upgrades stay small.
 
-Virtual threads made concurrency cheap; structured concurrency and scoped values make it *safe*. Adopt them where a request fans out, and treat every entry point as a place where context must be bound explicitly.
+Virtual threads make concurrency cheap. Structured concurrency and scoped values make it safer. I use them where a request fans out, and I bind context explicitly at every entry point.

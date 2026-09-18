@@ -3,18 +3,31 @@ title: "From 'Hello world' to an engineering portfolio"
 date: 2026-07-21T00:00:00Z
 description: "How I rebuilt giro-dev.github.io to support my next career step."
 ---
+# From 'Hello world' to an engineering portfolio
 
-## Goal
+## 1. Overview
 
-Move from a placeholder page to a professional online presence that supports applications to **Staff Engineer**, **Principal Engineer** and **Software Architect** roles in product-led companies.
+I rebuilt giro-dev.github.io from a placeholder page into an engineering portfolio. The goal was to make my work and experience easy to find.
 
-## What changed
+In this post I will show what changed and why I made these changes.
 
-- A single-page portfolio with a clear hero, executive summary, core competencies, experience, engineering portfolio, education and contact.
-- Data-driven content stored in YAML and TOML files, making updates straightforward.
-- Hugo as the static site generator and GitHub Actions for continuous deployment.
-- A blog section for ADRs, case studies and technical notes.
+## 2. Goal
 
-## Why it matters
+I wanted to move from a placeholder page to an online profile for applications to **Staff Engineer**, **Principal Engineer**, and **Software Architect** roles in product-led companies.
 
-Recruiters and hiring managers at companies like Grafana, Red Hat, IQVIA or Roche spend seconds scanning a profile. A focused portfolio that highlights **architecture**, **leadership** and **real projects** makes the difference between being discarded and getting a conversation.
+## 3. What changed
+
+- **Portfolio page** — one page with a clear hero, executive summary, core competencies, experience, engineering portfolio, education, and contact details.
+- **Data-driven content** — content is stored in YAML and TOML files, so updates are straightforward.
+- **Hugo and GitHub Actions** — Hugo builds the site and GitHub Actions deploys it continuously.
+- **Blog section** — the site now has a place for ADRs, case studies, and technical notes.
+
+## 4. Why it matters
+
+Recruiters and hiring managers at companies such as Grafana, Red Hat, IQVIA, or Roche may spend only a few seconds scanning a profile. A focused portfolio shows my **architecture**, **leadership**, and **real projects** in one place.
+
+This gives them a clear reason to continue the conversation.
+
+## 5. Conclusion
+
+The new site is a better starting point for my next career step. It explains what I do, shows my experience, and gives me space for technical writing.
