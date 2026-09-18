@@ -1,0 +1,20 @@
+- title: Arquitectura y diseño
+  points:
+    - Domain-Driven Design, Hexagonal Architecture y sistemas Event-Driven
+    - Microservices y plataformas backend distribuidas
+    - Diseño de APIs, integración de datos y patrones de integración empresarial
+- title: Liderazgo técnico
+  points:
+    - Liderazgo de equipos backend y mentoría de ingenieros
+    - Traducción de necesidades de negocio a hojas de ruta técnicas
+    - Calidad, CI/CD y facilidad de mantenimiento como prioridades
+- title: Backend moderno
+  points:
+    - Java, Spring Boot, Spring Batch y Spring Security
+    - Mensajería fiable con RabbitMQ y PostgreSQL
+    - Despliegue cloud-native con Docker y Kubernetes
+- title: IA y tecnología emergente
+  points:
+    - Spring AI, orquestación de LLM y búsqueda vectorial
+    - Pipelines de audio y vídeo en tiempo real (Whisper, LiveKit, Piper TTS)
+    - Experimentos con IA local-first y automatización inteligente

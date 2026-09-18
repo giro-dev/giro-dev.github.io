@@ -1,0 +1,40 @@
+- period: Set 2023 – Actualitat
+  role: Lead Software Engineer
+  company: Mercedes-Benz Group Services Madrid
+  description: Responsable tècnic backend per a sistemes d’automoció empresarials. Decisions d’arquitectura, disseny d’APIs, mentoria d’equips i impuls dels estàndards d’enginyeria en serveis distribuïts.
+  tags:
+    - Java
+    - Spring Boot
+    - Microservices
+- period: Set 2022 – Ago 2023
+  role: Software Engineer
+  company: Mercedes-Benz Group Services Madrid
+  description: Desenvolupament i manteniment de serveis backend i integracions dins de l’ecosistema d’enginyeria de Mercedes-Benz, amb focus en la fiabilitat i en patrons empresarials escalables.
+  tags:
+    - Java
+    - REST APIs
+    - CI/CD
+- period: Ago 2021 – Set 2022
+  role: Software Engineer
+  company: Ibermática
+  description: Lliurament de solucions backend per a clients en projectes de consultoria, amb arquitectura neta i stacks Java moderns per a plataformes empresarials.
+  tags:
+    - Java
+    - Spring
+    - Enterprise Integration
+- period: Ago 2019 – Ago 2021
+  role: Analyst Programmer
+  company: Softtek
+  description: Anàlisi, disseny i desenvolupament d’aplicacions de negoci, connectant els requisits funcionals amb la implementació tècnica en equips multidisciplinaris.
+  tags:
+    - Java
+    - Spring Boot
+    - PostgreSQL
+- period: Ago 2017 – Ago 2019
+  role: Web Application Developer
+  company: Capgemini
+  description: Construcció i manteniment d’aplicacions web i serveis per a clients grans, amb una base sòlida en lliurament de software empresarial i col·laboració àgil.
+  tags:
+    - Java
+    - Web Applications
+    - Agile

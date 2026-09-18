@@ -58,6 +58,22 @@ nav ul {
 nav a { color: var(--muted); }
 nav a:hover { color: var(--text); }
 
+.lang-switch {
+  gap: 0.5rem;
+  margin-left: 1rem;
+}
+
+.lang-switch li + li::before {
+  content: "|";
+  color: var(--surface-2);
+  margin-right: 0.5rem;
+}
+
+.lang-switch a.active {
+  color: var(--text);
+  font-weight: 600;
+}
+
 .hero {
   padding: 5rem 0 3rem;
   border-bottom: 1px solid var(--surface-2);

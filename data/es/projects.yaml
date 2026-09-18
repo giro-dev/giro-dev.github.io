@@ -1,0 +1,56 @@
+- name: Matriarch
+  description: Librería Java que implementa el patrón Object Mother con una API fluent. Automatiza la generación de datos de prueba para POJOs y Records, con carga de patrones Jackson/YAML e integración con JUnit 5.
+  points:
+    - API pública clara con builders y estrategias de override
+    - Publicación en Maven Central y CI con GitHub Actions
+    - Sitio de documentación con Hugo y soporte para semillas deterministas
+  links:
+    - text: Código
+      url: https://github.com/giro-dev/matriarch
+- name: AI Game Master
+  description: Plataforma de orquestación de un Game Master con IA para Foundry VTT. Backend con Spring Boot e integración VTT con TypeScript, LLM, búsqueda vectorial y pipelines de audio en tiempo real.
+  points:
+    - Pipeline RAG con OpenSearch para recuperar reglas e historia
+    - Arquitectura LLM multiagente (Director, Verifier, ItemGen)
+    - Integración de Whisper STT, Piper TTS y LiveKit/WebSocket
+  links:
+    - text: Código
+      url: https://github.com/giro-dev/AI-game-master
+- name: Bruno
+  description: Fork open-source de un cliente de APIs (Electron + React + Node.js). Alternativa ligera y compatible con Git a Postman para explorar y probar APIs.
+  points:
+    - Frontend React e IPC del proceso principal de Electron
+    - Formato de peticiones de texto plano .bru
+    - Runtime de scripts, conversores y almacenamiento local-first
+  links:
+    - text: Código
+      url: https://github.com/giro-dev/bruno
+- name: Disk Sentinel
+  description: Gestor de reposo de discos NO-WAKEUP para Debian, Ubuntu y Proxmox. Mantiene los discos inactivos detenidos y evita que tareas programadas los activen por error.
+  points:
+    - Observación a nivel de sistema y correlación de procesos
+    - Daemon ligero para laboratorios domésticos
+    - Programación de sistemas y automatización prácticas
+  links:
+    - text: Código
+      url: https://github.com/giro-dev/disk-sentinel
+- name: Registre
+  description: Aplicación personal de productividad con plantillas dinámicas, importación y exportación JSON y una UI responsive moderna. Está pensada para capturar y organizar registros estructurados.
+  points:
+    - Tipos de campos configurables y plantillas basadas en emojis
+    - Importación de datos en el cliente y motor de plantillas
+    - Iteración de navegación moderna y diseño visual
+  links:
+    - text: Código
+      url: https://github.com/giro-dev/registre
+- name: Foundry VTT Modules
+  description: Colección de módulos que amplían Foundry VTT, con transcripción de sesiones en directo con LiveKit, localización al catalán y resúmenes de sesiones para RPG de mesa.
+  points:
+    - Transcripción de audio en tiempo real y generación de resúmenes
+    - Integración VTT con TypeScript y empaquetado
+    - i18n y herramientas para la comunidad
+  links:
+    - text: Play Logger
+      url: https://github.com/giro-dev/foundry-vtt-play-logger
+    - text: Dee Sanction
+      url: https://github.com/giro-dev/foundryvtt-dee-sanction
