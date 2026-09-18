@@ -53,7 +53,7 @@
       links.forEach(function (a) { available[a.dataset.lang] = a.href; a.addEventListener('click', function () { localStorage.setItem('lang', a.dataset.lang); }); });
       if (sessionStorage.getItem('langRedirected')) return;
       var preferred = localStorage.getItem('lang');
-      if (!preferred) {
+      if (!preferred && current === 'en') {
         var langs = navigator.languages || [navigator.language];
         for (var i = 0; i < langs.length; i++) {
           var code = (langs[i] || '').toLowerCase().split('-')[0];
